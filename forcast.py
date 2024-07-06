@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
 import json
 
@@ -11,18 +9,8 @@ def forecast(dates, cases):
     model_forcast = ARIMA(df['cases'], order=(10, 0, 1))
     model_forcast_fit = model_forcast.fit()
     test_forecast_new = model_forcast_fit.forecast(steps=7)
-    plt.figure(figsize=(14,7))
-    plt.plot(df['cases'], label='Historical Data')
-    plt.plot(test_forecast_new, label='Forecasted 7 Days', color='green')
-    plt.title('ARIMA Model Forecast 7 Days')
-    plt.xlabel('Date')
-    plt.ylabel('Reported Cases')
-    plt.legend()
-    plt.savefig('forecast.png')
-    plt.close()
     df = pd.DataFrame({'date': test_forecast_new.index.strftime('%Y-%m-%d'), 'new_cases': test_forecast_new.values})
     df['new_cases'] = df['new_cases'].astype(int)
-    df.to_csv("new_cases", sep=',',index=False)
     return json.dumps(df.to_json(orient="records"))
 
 # This function deterimines the index where there are still values in the dataset, beyond this point it's zeroes.

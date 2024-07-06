@@ -21,12 +21,7 @@ def request_data():
 
         text = response.text
         datesMatch = match_iterate(text, "dates")
-        with open('matches_dates.txt', 'w') as file:
-            file.write(f"{datesMatch}\n")
-
         dataMatch = match_iterate(text, "data")
-        with open('matches_data.txt', 'w') as file:
-            file.write(f"{dataMatch}\n")
         
     except HTTPError as e:
         print(f"HTTP error occurred: {e}")
