@@ -5,6 +5,16 @@ import json
 
 
 def forecast(dates, cases):
+    """
+    Forcasts the new cases for the next 7 days, using an ARIMA model from the last know recording.
+
+    Input:
+        dates: list of the dates
+        cases: list of the cases
+    
+    Output:
+        returns json object with the forcasted dates and cases
+    """
     df = preprocessing(dates, cases)    
     model_forcast = ARIMA(df['cases'], order=(10, 0, 1))
     model_forcast_fit = model_forcast.fit()
@@ -13,9 +23,17 @@ def forecast(dates, cases):
     df['new_cases'] = df['new_cases'].astype(int)
     return json.dumps(df.to_json(orient="records"))
 
-# This function deterimines the index where there are still values in the dataset, beyond this point it's zeroes.
-# We do not want to simply remove the zeroes in the core of the data
+
 def end_index(cases):
+    """
+    Deterimines the index of the trailing zeros in the dataset.
+    We do not want to remove the zeroes in the core of the data.
+
+    Input: 
+        cases: list of cases
+    Output: 
+        index interger
+    """
     i = 0
     for elem in reversed(cases):
         if elem > 0:
@@ -25,15 +43,29 @@ def end_index(cases):
 
 
 def preprocessing(dates, cases):
+    """
+    Prepares the data for the model.
+    Input:
+        dates: list of the dates
+        cases: list of the cases
+    
+    Output:
+        df: dataframe of dates and cases
+
+    Processing carried out:
+        - ignoring trailing zeros
+        - removing all null entires
+        - populating all internal zeros with the average of the neighbours
+        - limiting data to entries post 2022-06-17
+    """
     limit_index = end_index(cases)
     covid_cases = { "dates":dates[:limit_index], "cases":cases[:limit_index]}
     df = pd.DataFrame(data=covid_cases)
     df['dates'] = pd.to_datetime(df['dates'])
     df = df[df.cases.notnull()]
-    # use capital letters, name it to cases
-    # check what parameters you can load on data importing, without explicitly defining the steps
 
-     #This function is used to smooth out the data and remove any internal zeros in the function, this is important in order to carry out the adffuller test
+    #This function is used to smooth out the data and remove any internal zeros in the function
+    #this is also important in order to carry out the adffuller test
     series = df['cases']
     filled_series = series.copy()
     rolling_mean = series.rolling(window=7, min_periods=1, center=True).mean()
@@ -41,10 +73,12 @@ def preprocessing(dates, cases):
     filled_series[mask] = rolling_mean[mask]
     df["cases"] = filled_series
 
+    """
+    Towards the end of the pandemic the trend was stable and had less pronounced seasonal variation. 
+    This would skew the short term prediciton that needs to be made hence this data needed to be excluded in using this methematical model
+    2022-06-21 Cut off is a resut of the end of the previous sparodic behaviour, looking at the gentle forecast going forward"""
     mask = (df['dates'] > '2022-06-17')
     df = df.loc[mask]
     df.set_index('dates', inplace=True)
-    #Towards the end of the pandemic the tred was stable and had less pronounced seasonal variation. This would skew the short term prediciton that needs to be made hence this data needed to be excluded in using this methematical model
-    # 2022-06-21 Cut off is a resut of the end of the previous sparodic behaviour, looking at the gentle forecast going forward
 
     return df

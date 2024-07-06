@@ -8,7 +8,7 @@ def request_data():
     Sends an HTTP GET request to the specified URL and returns the daily dates and cases.
 
     Returns:
-        The scrapped data from the worlddometers site
+        The scrapped daily cases and dates from the worlddometers site
 
     Raises:
         HTTPError: If an HTTP error occurs during the request.
@@ -32,7 +32,17 @@ def request_data():
 
     return datesMatch, dataMatch 
 
-def match_iterate(text, type ):
+def match_iterate(text, type):
+    """
+    Searches the HTML content then returns the correct results data or dates
+
+    Input:
+        text: this is the html text that needs to be searched
+        type: this can be data or dates to apply the correct fliter
+
+    Returns:
+        The scrapped daily cases and dates from the worlddometers site
+    """
     pattern = re.compile(r'(\[((null,)|(\d{1,5},?))+\])') if type == "data" else re.compile(r'(\[("\w{3}\s\w{2},\s\d{4}",?)+\])')
     matches = pattern.finditer(text)
     # third index contains daily cases
